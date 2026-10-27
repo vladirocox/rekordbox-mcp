@@ -1103,8 +1103,21 @@ class RekordboxDatabase:
             raise RuntimeError("Database not connected")
 
         def _inner():
+            # pyrekordbox's remove_from_playlist expects the playlist entry
+            # (DjmdSongPlaylist), not the content ID, so look the entries up first
+            entries = [
+                s
+                for s in self.db.get_playlist_songs(PlaylistID=int(playlist_id))
+                if not getattr(s, "rb_local_deleted", 0)
+                and str(s.ContentID) == str(track_id)
+            ]
+            if not entries:
+                raise ValueError(
+                    f"Track {track_id} is not in playlist {playlist_id}"
+                )
             self._create_backup()
-            self.db.remove_from_playlist(int(playlist_id), int(track_id))
+            for entry in entries:
+                self.db.remove_from_playlist(int(playlist_id), entry)
             self.db.commit()
             self._invalidate_content_cache()
             logger.info(f"Removed track {track_id} from playlist {playlist_id}")
