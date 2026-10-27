@@ -54,6 +54,16 @@ class TestDetectDatabasePath:
             assert "Library" in str(path)
             assert "Pioneer" in str(path)
 
+    def test_prefers_rekordbox_subfolder(self, tmp_path):
+        """db_dir must be the folder holding master.db and masterPlaylists6.xml."""
+        (tmp_path / "Library" / "Pioneer" / "rekordbox").mkdir(parents=True)
+        db = RekordboxDatabase()
+        with patch("rekordbox_mcp.database.os.name", "posix"), \
+             patch("rekordbox_mcp.database.sys.platform", "darwin"), \
+             patch.object(Path, "home", return_value=tmp_path):
+            path = db._detect_database_path()
+            assert path == tmp_path / "Library" / "Pioneer" / "rekordbox"
+
     def test_windows(self):
         db = RekordboxDatabase()
         fake_home = Path("/Users/testuser")

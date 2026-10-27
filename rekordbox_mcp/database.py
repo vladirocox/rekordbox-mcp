@@ -90,6 +90,12 @@ class RekordboxDatabase:
         if not base_path.exists():
             raise FileNotFoundError(f"Rekordbox directory not found at {base_path}")
 
+        # master.db and masterPlaylists6.xml live in the "rekordbox" subfolder.
+        # pyrekordbox uses db_dir to find the XML, so pointing it at the Pioneer
+        # folder means new playlists never get registered and don't show up.
+        rekordbox_dir = base_path / "rekordbox"
+        if rekordbox_dir.exists():
+            return rekordbox_dir
         return base_path
 
     async def is_connected(self) -> bool:
